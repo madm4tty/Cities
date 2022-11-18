@@ -26,15 +26,6 @@ def create_connection(db_file):
 
 
 
-def get_col_names(conn):
-#this works beautifully given that you know the table name
-    cur = conn.cursor()
-    
-    
-    print ([member[0] for member in cur.description])
-
-
-
 def select_cities(conn, cityname):
     """
     Query tasks by priority
@@ -45,51 +36,48 @@ def select_cities(conn, cityname):
 
     cur = conn.cursor()
 
-    #headers = list(map(lambda attr : attr[0], cur.description))
-    #results = [{header:row[i] for i, header in enumerate(headers)} for row in cursor]
-
-    #cur.execute("SELECT * FROM cities WHERE \"ASCII Name\" = ?", (cityname,))
-
-    #Select useful columns
-    #cur.execute("SELECT \"ASCII Name\", \"Country Name EN\", Population, Coordinates FROM cities WHERE \"ASCII Name\" = ?", (cityname,))
     
-    #citDF = pd.read_sql("SELECT \"ASCII Name\", \"Country Name EN\", Population, Coordinates FROM cities WHERE \"ASCII Name\" = (?)",conn ,params=(cityname,))
-    citDF = pd.read_sql("SELECT * FROM cities WHERE \"ASCII Name\" = (?)",conn ,params=(cityname,))
+
+    #Query target city
+    TcityDF = pd.read_sql("SELECT \"ASCII Name\", \"Country Name EN\", Population, Coordinates FROM cities WHERE \"ASCII Name\" = (?)",conn ,params=(cityname,))
 
 
 
     #rows = cur.fetchall()
-    return citDF
+    return TcityDF
 
 
 
 
 def main():
-    database = r"C:\Dev\Projects\Python\sqlite_test\pythonsqlite.db"
-    #con = sqlite3.connect('/Users/mac/Desktop/Python/Baye_stat/productiondisruption/PCI_meat.sqlite')
+    database = r"C:\Dev\Projects\Python\sqlite_test\pythonsqlite.db"    
     
+    #Local coordinates (testing)
+    print('Local coordinates:')
+    coords_U = "53.480950, -2.237430"
+
     #Get target city
     print('Enter search city:')
-    cityinput = input()
+    Tcityinput = input()
     
-    #TESTING ONLY
-    #cityinput = 'Leeds'
 
-    print ("Searching for:",cityinput)
+    print ("Searching for:",Tcityinput)
 
 
     # create a database connection
     conn = create_connection(database)
     with conn:
-       citDF = select_cities(conn, cityinput)
+       TcityDF = select_cities(conn, Tcityinput)
+       UcityDF = select_cities (conn, coords_U)
 
-    print(citDF)
 
+    TcityDF_len = (len(TcityDF.index))
 
-    #for row in rows:
-     #   print(row)
-        
-        
+    print(TcityDF_len, " results found:")
+
+    print(TcityDF)
+
+       
         
 
 if __name__ == '__main__':
