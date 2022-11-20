@@ -74,14 +74,24 @@ def main():
 
     # If there are multiple results in t_city_df we need to narrow down
     if t_city_df_len > 1:
+        print("t_city_df:")
         print(t_city_df)
         msg = f"There are: {t_city_df_len} results for: {t_city_input}."
         print(msg)
         input_country = input("Which country is the city in? (use country code):")
         input_country.capitalize()
 
-        result_city_df = t_city_df.loc[t_city_df.ctrycode == input_country].city
-        result_city_id = [t_city_df.ctrycode == input_country].id
+        #result_city_df = t_city_df.loc[t_city_df.ctrycode == input_country].city
+        #result_city_id = [t_city_df.ctrycode == input_country].id
+
+        #result_city_id = df.loc[df['column_name'] == some_value]
+        #result_city_id = t_city_df.loc[t_city_df['ctrycode'] == input_country]
+        #df.loc[df['favorite_color'] == 'yellow']
+        result_city_id = t_city_df.query("ctrycode == GB")
+
+        #df.loc[df['column_name'].isin(some_values)]
+        #result_city_id = t_city_df.loc[t_city_df['ctrycode'].isin(input_country)]
+
         print("result_city_id: ", result_city_id)
 
         # If there are multiple cities left after confirming country, the city with the largest population will be used
@@ -95,7 +105,7 @@ def main():
         # for ind in result_city_df.index:
         #    print(result_city_df['city'][ind], result_city_df['country'][ind])
 
-        print(result_city_df)
+        #print(result_city_df)
         # print(t_city_df.loc[result_city_df])
 
         # print(t_city_df.loc[t_city_df.country == input_country].city)
