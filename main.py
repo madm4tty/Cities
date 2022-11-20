@@ -91,7 +91,7 @@ def main():
         #    print(result_city_df.row["city"])
 
         # iterate through each row and select
-        # 'Name' and 'Stream' column respectively.
+        # 'Name'  and 'Stream' column respectively.
         # for ind in result_city_df.index:
         #    print(result_city_df['city'][ind], result_city_df['country'][ind])
 
