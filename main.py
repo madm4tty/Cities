@@ -37,7 +37,7 @@ def select_cities(conn, cityname):
 
     # Query target city
     t_city_df = pd.read_sql(
-        "SELECT city, country, ctrycode, Timezone, Population, Coordinates FROM cities WHERE city LIKE (?)",
+        "SELECT id, city, country, ctrycode, Timezone, Population, Coordinates FROM cities WHERE city LIKE (?)",
         conn, params=(cityname,))
 
     # rows = cur.fetchall()
@@ -47,6 +47,7 @@ def select_cities(conn, cityname):
 def iterate_over_df_result():
     # Empty for now
     return
+
 
 def main():
     pd.set_option('display.max_columns', None)
@@ -77,9 +78,13 @@ def main():
         msg = f"There are: {t_city_df_len} results for: {t_city_input}."
         print(msg)
         input_country = input("Which country is the city in? (use country code):")
+        input_country.capitalize()
 
-        #result_city_df = t_city_df.loc[t_city_df.ctrycode == input_country].city
         result_city_df = t_city_df.loc[t_city_df.ctrycode == input_country].city
+        result_city_id = [t_city_df.ctrycode == input_country].id
+        print("result_city_id: ", result_city_id)
+
+        # If there are multiple cities left after confirming country, the city with the largest population will be used
 
         # for ind in result_city_df.index:
         #    # call iterate_over_df_result function at this point?
@@ -90,17 +95,14 @@ def main():
         # for ind in result_city_df.index:
         #    print(result_city_df['city'][ind], result_city_df['country'][ind])
 
-
         print(result_city_df)
         # print(t_city_df.loc[result_city_df])
 
         # print(t_city_df.loc[t_city_df.country == input_country].city)
     else:
         # Print results
+        print("t_city_df_len is:", t_city_df_len)
         print(t_city_df)
-
-
-
 
     # Print results
     # print(t_city_df)

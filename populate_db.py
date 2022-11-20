@@ -12,7 +12,6 @@ import sqlite3 as sql3
 # Read a csv file to a dataframe with custom delimiter
 myDf = pd.read_csv('geonames-all-cities-with-a-population-1000.csv', sep=';'  , engine='python')
 
-
 del myDf['Geoname ID']
 del myDf['Name']
 del myDf['Alternate Names']
@@ -26,6 +25,9 @@ del myDf['LABEL EN']
 
 # Rename column names for ease of use
 myDf.rename(columns={'ASCII Name': 'city', 'Country name EN': 'country', 'Country Code': 'ctrycode'}, inplace=True)
+
+# Insert an index column
+myDf.insert(0, 'id', range(1, 1 + len(myDf)))
 
 print('Contents of Dataframe : ')
 
