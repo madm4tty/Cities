@@ -10,7 +10,7 @@ import pandas as pd
 import sqlite3 as sql3
 
 # Read a csv file to a dataframe with custom delimiter
-myDf =  pd.read_csv('C:\Dev\Projects\Python\Data\geonames-all-cities-with-a-population-1000.csv', sep=';'  , engine='python')
+myDf = pd.read_csv('geonames-all-cities-with-a-population-1000.csv', sep=';'  , engine='python')
 
 
 del myDf['Geoname ID']
@@ -24,6 +24,8 @@ del myDf['Admin3 Code']
 del myDf['Admin4 Code']
 del myDf['LABEL EN']
 
+# Rename column names for ease of use
+myDf.rename(columns={'ASCII Name': 'city', 'Country name EN': 'country', 'Country Code': 'ctrycode'}, inplace=True)
 
 print('Contents of Dataframe : ')
 
@@ -31,7 +33,7 @@ print('Contents of Dataframe : ')
 print(myDf)
 print(myDf.dtypes)
 
-#Push to SQLite file
-conn = sql3.connect('C:\Dev\Projects\Python\sqlite_test\pythonsqlite.db')
+# Push to SQLite file
+conn = sql3.connect('pythonsqlite.db')
 myDf.to_sql('cities', conn, if_exists='replace', index=False)
 pd.read_sql('select * from cities', conn)
