@@ -79,18 +79,20 @@ def main():
         msg = f"There are: {t_city_df_len} results for: {t_city_input}."
         print(msg)
         input_country = input("Which country is the city in? (use country code):")
-        input_country.capitalize()
+        input_country = input_country.upper()
+        print(f"input_country is: {input_country}")
 
-        #result_city_df = t_city_df.loc[t_city_df.ctrycode == input_country].city
-        #result_city_id = [t_city_df.ctrycode == input_country].id
+        t_result_city = t_city_df.query("ctrycode == @input_country")
 
-        #result_city_id = df.loc[df['column_name'] == some_value]
-        #result_city_id = t_city_df.loc[t_city_df['ctrycode'] == input_country]
-        #df.loc[df['favorite_color'] == 'yellow']
-        result_city_id = t_city_df.query("ctrycode == GB")
+        # If there are multiple cities in results, the city with the largest population will be used
+        t_result_city_len = (len(t_result_city.index))
+        print(f"t_result_city_len is: {t_result_city_len}")
+        if t_result_city_len > 1:
+            result_city_id = ['Population'].max()
 
-        #df.loc[df['column_name'].isin(some_values)]
-        #result_city_id = t_city_df.loc[t_city_df['ctrycode'].isin(input_country)]
+
+        else:
+            result_city_id = t_result_city
 
         print("result_city_id: ", result_city_id)
 
