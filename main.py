@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Nov 16 17:05:53 2022
-
 @author: FOLLOWSM
 """
 
@@ -26,27 +25,19 @@ def create_connection(db_file):
 
 
 def select_cities(conn, cityname):
-    """
-    Query tasks by priority
-    :param conn: the Connection object
-    :param priority:
-    :return:
-    """
-
-    cur = conn.cursor()
-
     # Query target city
     t_city_df = pd.read_sql(
         "SELECT id, city, country, ctrycode, Timezone, Population, Coordinates FROM cities WHERE city LIKE (?)",
         conn, params=(cityname,))
-
-    # rows = cur.fetchall()
     return t_city_df
 
 
 def iterate_over_df_result():
     # Empty for now
     return
+
+
+
 
 
 def main():
@@ -68,7 +59,7 @@ def main():
     conn = create_connection(database)
     with conn:
         t_city_df = select_cities(conn, t_city_input)
-        u_city_df = select_cities(conn, coords_u)
+
 
     t_city_df_len = (len(t_city_df.index))
 
@@ -88,36 +79,60 @@ def main():
         t_result_city_len = (len(t_result_city.index))
         print(f"t_result_city_len is: {t_result_city_len}")
         if t_result_city_len > 1:
-            result_city_id = ['Population'].max()
+            #t_result_city
+            
+            
+            print(f"Multiple cities found for {input_country} (see below), defaulting to city with largest population")
+            print(t_result_city)
+            
+            #recent_date = df['date'].max()
+            #result_city_max = t_result_city['Population'].max()
+            
+            test = t_result_city['Population'].max()
+            print (f"t_result_city: {test}")
+            
+            # top n rows ordered by multiple columns
+           # gapminder_2007.nlargest(3,['lifeExp','gdpPercap'])
+            #gapminder_2007.nlargest(3,['lifeExp','gdpPercap'])
+            result_city_max = t_result_city.nlargest(1,['Population'])
+            
+            #for row in t_result_city.index:
+                #print(f'Max element of row {row} is:', max(t_result_city.iloc[row]))
+             #   print(f'Max element of row {row} is:', max(t_result_city.iloc[row]))
+            
+            
+            #result_city_max = t_result_city.loc[t_result_city['Population'].max(), 'id']
+            #result_city_max = df.loc[df.groupby('YearReleased')['count'].idxmax()]
+           
+            # result_city_max = t_result_city.loc[t_result_city['Population'].idxmax()]
+            #result_city_id = result_city_max.iloc[0]['id']
+            
+            #df2=df.loc[df['Fee'] == 30000, 'Courses']
+
+            #df2=df.loc[df['Fee'] == 30000, 'Courses']
+
+            
+            print(f"result_city_max: {result_city_max}")
+            
+            #result_city_id = result_city_max.iloc[0]['id']
+            #result_city_id = ['Population'].max()
 
 
         else:
-            result_city_id = t_result_city
+            # Take row id value for lookup
+            result_city_id = t_result_city.iloc[0]['id']
+            
 
-        print("result_city_id: ", result_city_id)
 
-        # If there are multiple cities left after confirming country, the city with the largest population will be used
+        #print("result_city_id: ", result_city_id)
 
-        # for ind in result_city_df.index:
-        #    # call iterate_over_df_result function at this point?
-        #    print(result_city_df.row["city"])
 
-        # iterate through each row and select
-        # 'Name'  and 'Stream' column respectively.
-        # for ind in result_city_df.index:
-        #    print(result_city_df['city'][ind], result_city_df['country'][ind])
-
-        #print(result_city_df)
-        # print(t_city_df.loc[result_city_df])
-
-        # print(t_city_df.loc[t_city_df.country == input_country].city)
     else:
         # Print results
         print("t_city_df_len is:", t_city_df_len)
         print(t_city_df)
 
-    # Print results
-    # print(t_city_df)
+
 
 
 if __name__ == '__main__':
