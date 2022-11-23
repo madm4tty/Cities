@@ -36,10 +36,6 @@ def iterate_over_df_result():
     # Empty for now
     return
 
-
-
-
-
 def main():
     pd.set_option('display.max_columns', None)
 
