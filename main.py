@@ -32,10 +32,65 @@ def select_cities(conn, cityname):
     return t_city_df
 
 
-def iterate_over_df_result():
-    # Empty for now
-    return
 
+def nearest_city_search(conn, city_id, coords_u):
+    print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}")
+    
+    # split coords
+    coords = coords_u.split(",")
+    lat, lon = coords[0], coords[1]
+    
+    
+    # Get all cities into DF for lat/long matching
+    city_df_lat_lon = pd.read_sql(
+        "SELECT id, city, Population, Coordinates FROM cities Limit 10;", conn)
+    # Create separate lat lon columns
+    city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
+    # Convert lat lon to float datatype to help with sorting
+    city_df_lat_lon = city_df_lat_lon.astype({'Lat':'float','Lon':'float'})
+    
+    
+    result = city_df_lat_lon.dtypes
+    print("Check city_df_lat_lon datatypes:")
+    print(result)
+    
+    
+    # Use the DF to search
+    city_match = False
+    myint = 0
+    while city_match == False:
+        myint +=1 # Testing loop
+        
+    
+    
+    
+    
+    
+    
+    
+        
+        print(f"Continue the search! ({myint})")
+        if myint > 20:
+            print("Max loops reached, exit while loop!")
+            city_match = True
+            
+            
+    print(city_df_lat_lon)
+    
+    
+    
+    # Find nearest match by lat
+    latmatch = pd.read_sql(
+        "SELECT id, city, Population, Coordinates FROM cities WHERE city LIKE (?)",
+        conn, params=(coords_u,))
+    #print(f"Latmatch:{latmatch}")
+    
+          
+    print(f"split coords - Lat:{lat}, Lon:{lon}")
+    
+    
+    n_city_id = "TBA"
+    return n_city_id
 
 
 
@@ -59,7 +114,6 @@ def main():
     conn = create_connection(database)
     with conn:
         t_city_df = select_cities(conn, t_city_input)
-
 
     t_city_df_len = (len(t_city_df.index))
 
@@ -97,7 +151,10 @@ def main():
         # Print results
         result_city_id = t_city_df.iloc[0]['id']
         print("result_city_id: ", result_city_id)
-        print(t_city_df)
+
+
+    # Now we've got the target city ID, we need to search
+    nearest_city_search(conn, result_city_id, coords_u)
 
 
 
