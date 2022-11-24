@@ -37,41 +37,51 @@ def nearest_city_search(conn, city_id, coords_u):
     print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}")
     
     # split coords
-    coords = coords_u.split(",")
-    lat, lon = coords[0], coords[1]
-    
+    u_coords = coords_u.split(",")
+    u_lat, u_lon = u_coords[0], u_coords[1]
+    print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")
     
     # Get all cities into DF for lat/long matching
     city_df_lat_lon = pd.read_sql(
-        "SELECT id, city, Population, Coordinates FROM cities Limit 10;", conn)
+        "SELECT id, city, Population, Coordinates FROM cities;", conn)
     # Create separate lat lon columns
     city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
     # Convert lat lon to float datatype to help with sorting
     city_df_lat_lon = city_df_lat_lon.astype({'Lat':'float','Lon':'float'})
-    
-    
     result = city_df_lat_lon.dtypes
     print("Check city_df_lat_lon datatypes:")
     print(result)
     
+    # Sort the datafrane by values
+    print(f"Sort city_df_lat_lon by lat nearest to {u_lat}")
+    
+    #city_df_lat_lon.sort_values(by=["Lat", "Lon"], inplace=True)
+   
+   #df_sort = df.iloc[(df['num']-input).abs().argsort()[:2]]
+   # df_sort = city_df_lat_lon.iloc[(city_df_lat_lon['Lat']-u_lat).abs().argsort()[:10]]
+   
+   #D16.sort_values(by='PRACTICE', ascending=True)
+    test_df = city_df_lat_lon.sort_values('Lat')
+    print("Print test_df:")
+    print(test_df)
     
     # Use the DF to search
     city_match = False
     myint = 0
+    # Enter while loop to search for nearest match
     while city_match == False:
         myint +=1 # Testing loop
         
-    
-    
-    
+        
+        
     
     
     
     
         
         print(f"Continue the search! ({myint})")
-        if myint > 20:
-            print("Max loops reached, exit while loop!")
+        if myint > 1:
+            print("TESTING - Max loops reached, exit while loop!")
             city_match = True
             
             
@@ -80,16 +90,17 @@ def nearest_city_search(conn, city_id, coords_u):
     
     
     # Find nearest match by lat
-    latmatch = pd.read_sql(
-        "SELECT id, city, Population, Coordinates FROM cities WHERE city LIKE (?)",
-        conn, params=(coords_u,))
+    #latmatch = pd.read_sql(
+    #    "SELECT id, city, Population, Coordinates FROM cities WHERE city LIKE (?)",
+    #    conn, params=(coords_u,))
     #print(f"Latmatch:{latmatch}")
     
           
-    print(f"split coords - Lat:{lat}, Lon:{lon}")
+    
     
     
     n_city_id = "TBA"
+    print("End of nearest_city_search")
     return n_city_id
 
 
