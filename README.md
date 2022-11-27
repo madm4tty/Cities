@@ -20,6 +20,8 @@ Design:
   - Search the database and match the nearest latitude value
   - Search the database and match the nearest Longitude value
   - Check the population of the city
+  - record the UID of each rejected city and disregard for the next pass
   - repeat the above until the population matches
+  
   
 
