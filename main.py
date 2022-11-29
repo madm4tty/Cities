@@ -36,18 +36,18 @@ def select_cities(conn, cityname):
 #    dist = (df['Lat'] - lat).abs() + (df['Lon'] - lon).abs()
 #    return df.loc[dist.idxmin()]
 
-def find_closest(df, lat, lon, pop):
-    print(f"Find closest for values: {lat}, {lon}, {pop}")
-    dist = (df['Lat'] - lat).abs() + (df['Lon'] - lon).abs() + (df['Population'] - pop).abs()
-    return df.loc[dist.idxmin()]
 
 
-def nearest_city_search(conn, city_id, coords_u, pop_u):
-    print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_u:{pop_u}")
+
+
+
+def nearest_city_search(conn, city_id, coords_u, pop_t):
+    print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_t:{pop_t}")
     
     # split coords
     u_coords = coords_u.split(",")
     u_lat, u_lon = u_coords[0], u_coords[1]
+    
     # convert coords to float 64 datatype
     u_lat = float(u_lat)
     u_lon = float(u_lon)
@@ -55,15 +55,26 @@ def nearest_city_search(conn, city_id, coords_u, pop_u):
     
     # Get all cities into DF for lat/long matching
     city_df_lat_lon = pd.read_sql(
-        "SELECT id, city, Population, Coordinates FROM cities;", conn)
+        "SELECT id, city, ctrycode, Population, Coordinates FROM cities;", conn)
+    
     # Create separate lat lon columns
     city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
+    
     # Convert lat lon to float datatype to help with sorting
     city_df_lat_lon = city_df_lat_lon.astype({'Lat':'float','Lon':'float'})
     result = city_df_lat_lon.dtypes
     print("Check city_df_lat_lon datatypes:")
     print(result)
     
+
+    # Sort dataframe
+    print("Sort dataframe")
+    city_df_lat_lon.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
+
+    #Get subset of main dataframe to sort
+    print("Get subset of main dataframe to sort")
+    testdf = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 5000)]
+    print(testdf)
 
 
     # Use the DF to search
@@ -74,17 +85,14 @@ def nearest_city_search(conn, city_id, coords_u, pop_u):
         print(f"Search while match is false - number of passes: ({myint})")
         myint +=1 # Testing loop
         
-        print("Invoke find_closest")
-        cityid = find_closest(city_df_lat_lon, u_lat, u_lon, pop_u)
-        print(f"cityid is: {cityid}")
-
+  
 
         if myint > 0: #Test value to exit immediately
             print("TESTING - Max loops reached, exit while loop!")
             city_match = True
             
             
-    print(city_df_lat_lon)
+    #print(city_df_lat_lon)
 
     n_city_id = "TBA"
     print("End of nearest_city_search")
@@ -100,8 +108,8 @@ def main():
 
     # Local coordinates (testing)
     print('Local coordinates:')
-    coords_u = "53.480950,-2.237430"
-    pop_u = 455123
+    #coords_u = "53.480950,-2.237430" #- Manchester
+    coords_u = "53.798921,-1.551878" #- Leeds
 
     # Get target city
     print('Enter search city:')
@@ -151,9 +159,14 @@ def main():
         result_city_id = t_city_df.iloc[0]['id']
         print("result_city_id: ", result_city_id)
 
+    
 
-    # Now we've got the target city ID, we need to search
-    nearest_city_search(conn, result_city_id, coords_u, pop_u)
+    # Get target city's population from ID
+    city_t_name = t_city_df.iloc[0]['city']
+    pop_t = t_city_df.iloc[0]['Population']
+    print(f"Target city is: {city_t_name} with a population of: {pop_t}")
+    # Now run the search passing in the variables
+    nearest_city_search(conn, result_city_id, coords_u, pop_t)
     print("End of Main script")
 
 
