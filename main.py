@@ -5,6 +5,7 @@ Created on Wed Nov 16 17:05:53 2022
 """
 
 import pandas as pd
+import haversine as hv
 import sqlite3
 from sqlite3 import Error
 
@@ -51,7 +52,7 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # convert coords to float 64 datatype
     u_lat = float(u_lat)
     u_lon = float(u_lon)
-    print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")
+    print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")  
     
     # Get all cities into DF for lat/long matching
     city_df_lat_lon = pd.read_sql(
@@ -66,16 +67,31 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     print("Check city_df_lat_lon datatypes:")
     print(result)
     
-
-    # Sort dataframe
-    print("Sort dataframe")
-    city_df_lat_lon.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
-
-    #Get subset of main dataframe to sort
-    print("Get subset of main dataframe to sort")
-    testdf = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 5000)]
-    print(testdf)
-
+    
+    # Get city_id coordinates for distance measurement
+   # df.loc[df['column_name'] == some_value]
+    coords_t = city_df_lat_lon.loc[city_df_lat_lon['id'] == city_id]
+    #coords_t = city_df_lat_lon.loc[(city_df_lat_lon['id'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
+    
+    #Get subset of main dataframe for sort and search
+    print("Get subset of main dataframe for sort and search")
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
+    
+    # Sort subset dataframe
+    print("Sort subset dataframe")
+    sub_df.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
+    print (f"sub_df index: {len(sub_df.index)}")
+    
+    print("Print subset dataframe")
+    print(sub_df)
+    
+    
+    print("Haversine distance test")
+    test = hv(coords_u, coords_t, unit='mi')
+    print(f"Result: {coords_u} is {test} miles from {coords_t}")
+    
+    
+    #sub_df.to_csv('test_out.csv')  
 
     # Use the DF to search
     city_match = False
@@ -106,7 +122,7 @@ def main():
 
     database = r"pythonsqlite.db"
 
-    # Local coordinates (testing)
+    # Local coordinates (testing) - Get from user location eventually
     print('Local coordinates:')
     #coords_u = "53.480950,-2.237430" #- Manchester
     coords_u = "53.798921,-1.551878" #- Leeds
