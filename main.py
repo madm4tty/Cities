@@ -4,8 +4,8 @@ Created on Wed Nov 16 17:05:53 2022
 @author: FOLLOWSM
 """
 
+from math import radians, cos, sin, asin, sqrt
 import pandas as pd
-import haversine as hv
 import sqlite3
 from sqlite3 import Error
 
@@ -32,66 +32,78 @@ def select_cities(conn, cityname):
         conn, params=(cityname,))
     return t_city_df
 
-#def find_closest(df, lat, lon):
+
+def haversine(lon1, lat1, lon2, lat2):
+    """
+    Calculate the great circle distance in kilometers between two points 
+    on the earth (specified in decimal degrees)
+    """
+    # convert decimal degrees to radians 
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+
+    # haversine formula 
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * asin(sqrt(a))
+    r = 6371  # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
+    return c * r
+
+
+# def find_closest(df, lat, lon):
 #    print(f"Find closest for values: {lat}, {lon}")
 #    dist = (df['Lat'] - lat).abs() + (df['Lon'] - lon).abs()
 #    return df.loc[dist.idxmin()]
 
 
-
-
-
-
 def nearest_city_search(conn, city_id, coords_u, pop_t):
     print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_t:{pop_t}")
-    
+
     # split coords
     u_coords = coords_u.split(",")
     u_lat, u_lon = u_coords[0], u_coords[1]
-    
+
     # convert coords to float 64 datatype
     u_lat = float(u_lat)
     u_lon = float(u_lon)
-    print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")  
-    
+    print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")
+
     # Get all cities into DF for lat/long matching
     city_df_lat_lon = pd.read_sql(
         "SELECT id, city, ctrycode, Population, Coordinates FROM cities;", conn)
-    
+
     # Create separate lat lon columns
     city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
-    
+
     # Convert lat lon to float datatype to help with sorting
-    city_df_lat_lon = city_df_lat_lon.astype({'Lat':'float','Lon':'float'})
+    city_df_lat_lon = city_df_lat_lon.astype({'Lat': 'float', 'Lon': 'float'})
     result = city_df_lat_lon.dtypes
     print("Check city_df_lat_lon datatypes:")
     print(result)
-    
-    
+
     # Get city_id coordinates for distance measurement
-   # df.loc[df['column_name'] == some_value]
-    coords_t = city_df_lat_lon.loc[city_df_lat_lon['id'] == city_id]
-    #coords_t = city_df_lat_lon.loc[(city_df_lat_lon['id'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
-    
-    #Get subset of main dataframe for sort and search
+    # df.loc[df['column_name'] == some_value]
+    # coords_t = city_df_lat_lon.loc[city_df_lat_lon['id'] == city_id]
+    # coords_t = city_df_lat_lon.loc[(city_df_lat_lon['id'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
+
+    # Get subset of main dataframe for sort and search
     print("Get subset of main dataframe for sort and search")
     sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
-    
+
     # Sort subset dataframe
     print("Sort subset dataframe")
     sub_df.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
-    print (f"sub_df index: {len(sub_df.index)}")
-    
+    print(f"sub_df index: {len(sub_df.index)}")
+
     print("Print subset dataframe")
     print(sub_df)
-    
-    
+
     print("Haversine distance test")
-    test = hv(coords_u, coords_t, unit='mi')
-    print(f"Result: {coords_u} is {test} miles from {coords_t}")
-    
-    
-    #sub_df.to_csv('test_out.csv')  
+    distance = haversine(u_lat, u_lon, )
+    # test = hv(coords_u, coords_t, unit='mi')
+    print(f"distance from: {u_lat}, {u_lon} to  is {distance} km")
+
+    # sub_df.to_csv('test_out.csv')
 
     # Use the DF to search
     city_match = False
@@ -99,22 +111,17 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Enter while loop to search for nearest match
     while city_match == False:
         print(f"Search while match is false - number of passes: ({myint})")
-        myint +=1 # Testing loop
-        
-  
+        myint += 1  # Testing loop
 
-        if myint > 0: #Test value to exit immediately
+        if myint > 0:  # Test value to exit immediately
             print("TESTING - Max loops reached, exit while loop!")
             city_match = True
-            
-            
-    #print(city_df_lat_lon)
+
+    # print(city_df_lat_lon)
 
     n_city_id = "TBA"
     print("End of nearest_city_search")
     return n_city_id
-
-
 
 
 def main():
@@ -124,8 +131,8 @@ def main():
 
     # Local coordinates (testing) - Get from user location eventually
     print('Local coordinates:')
-    #coords_u = "53.480950,-2.237430" #- Manchester
-    coords_u = "53.798921,-1.551878" #- Leeds
+    # coords_u = "53.480950,-2.237430" #- Manchester
+    coords_u = "53.798921,-1.551878"  # - Leeds
 
     # Get target city
     print('Enter search city:')
@@ -175,8 +182,6 @@ def main():
         result_city_id = t_city_df.iloc[0]['id']
         print("result_city_id: ", result_city_id)
 
-    
-
     # Get target city's population from ID
     city_t_name = t_city_df.iloc[0]['city']
     pop_t = t_city_df.iloc[0]['Population']
@@ -184,7 +189,6 @@ def main():
     # Now run the search passing in the variables
     nearest_city_search(conn, result_city_id, coords_u, pop_t)
     print("End of Main script")
-
 
 
 if __name__ == '__main__':
