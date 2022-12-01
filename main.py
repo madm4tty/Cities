@@ -54,6 +54,7 @@ def haversine(lon1, lat1, lon2, lat2):
 def find_closest(df, pop_t):
     print(f"Find closest city for population: {pop_t}")
     dist = (df['Population'] - pop_t).abs()
+    #dist = (df['Population'] - pop_t).abs() + (df['distance'] - dist_t).abs()
     return df.loc[dist.idxmin()]
 
 
@@ -97,14 +98,15 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Get subset of main dataframe for sort and search
     print("Get subset of main dataframe for sort and search")
     #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
-    pophigh = pop_t + 10000
-    poplow = pop_t - 10000
+    pophigh = pop_t + 50000
+    poplow = pop_t - 50000
     
     # Narrow by population
     sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
     
     # Create new empty column in sub_df for calculated distances
     sub_df=sub_df.assign(distance = '')
+    sub_df=sub_df.assign(score = '')
         
     # Populate distance column in sub_df
     print("Populate distance column in sub_df")
@@ -113,15 +115,33 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
         city = (sub_df['city'][ind])
         t_lat = (sub_df['Lat'][ind])
         t_lon = (sub_df['Lon'][ind])
+        t_pop = (sub_df['Population'][ind])
         distance = haversine(u_lat, u_lon, t_lat, t_lon)
-        #print(f"Distance for {city} = {distance}")
+        t_pop = int(t_pop)
+        distance = int(distance)
         sub_df.loc[ind,'distance'] = distance
+        score = pop_t - t_pop
+        sub_df.loc[ind,'score'] = score
     
-    #print("Sort sub_df by distances (TEST)")
-    #sub_df.sort_values(by='distance',ascending=True, inplace=True)
-    #print("Print sub_df with distances calculated")
-    #print(sub_df)
+    print("Sort sub_df by distances (TEST)")
+    sub_df.sort_values(by='distance',ascending=True, inplace=True)
+    print("Print sub_df with distances calculated")
+    print(sub_df)
+    
 
+    file_name = 'sub_df.csv'
+    sub_df.to_csv(file_name)
+
+
+    # Confirm sort by distance
+    for ind in sub_df.index:
+        con_city = (sub_df['city'][ind])
+        con_pop = (sub_df['Population'][ind])
+        con_distance = (sub_df['distance'][ind])
+         
+
+        
+      
 
     n_city_id = find_closest(sub_df, pop_t)
     print ("Print n_city_id result") 
