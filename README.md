@@ -24,7 +24,8 @@ Design:
 - Find the nearest city to the user city with the closest match in population:-
   - create a smaller sub dataframe (sub_df) by constraining by country (and possibly population?)
   - Look into ways to further constraining sub dataframe
-  - Loop through dataset and create new column with distance measurement using Haversine (sorted ascending) from user coordinates
+  - Loop through dataset and create new column with distance measurement using Haversine from user coordinates
+  - Create a score column and populate with the difference between target and city
   - Loop through dataset and determine closest match in population size
   - Return city info
   
