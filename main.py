@@ -27,6 +27,7 @@ def create_connection(db_file):
 
 def select_cities(conn, cityname):
     # Query target city
+    cityname = cityname.lower()
     t_city_df = pd.read_sql(
         "SELECT id, city, country, ctrycode, Timezone, Population, Coordinates FROM cities WHERE city LIKE (?)",
         conn, params=(cityname,))
@@ -96,19 +97,15 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Get subset of main dataframe for sort and search
     print("Get subset of main dataframe for sort and search")
     #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB')]
-    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == ctrycode)]
+    pophigh = pop_t + 10000
+    poplow = pop_t - 10000
     
-
-
-    # Sort subset dataframe
-    #print("Sort subset dataframe")
-    #sub_df.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
-    #print(f"sub_df index: {len(sub_df.index)}")
+    # Narrow by population
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
     
     # Create new empty column in sub_df for calculated distances
-    sub_df['distance'] = ''
-
+    sub_df=sub_df.assign(distance = '')
+        
     # Populate distance column in sub_df
     print("Populate distance column in sub_df")
     # iterate through each row and select
@@ -120,12 +117,11 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
         #print(f"Distance for {city} = {distance}")
         sub_df.loc[ind,'distance'] = distance
     
-    print("Print sub_df with distances calculated")
-    print(sub_df)
-    #print("Haversine distance test")
-    #distance = haversine(u_lat, u_lon, 53.4765365, -2.2423459)
-    # test = hv(coords_u, coords_t, unit='mi')
-    #print(f"distance from: {u_lat}, {u_lon} to  is {distance} km")
+    #print("Sort sub_df by distances (TEST)")
+    #sub_df.sort_values(by='distance',ascending=True, inplace=True)
+    #print("Print sub_df with distances calculated")
+    #print(sub_df)
+
 
     n_city_id = find_closest(sub_df, pop_t)
     print ("Print n_city_id result") 
@@ -140,7 +136,6 @@ def main():
 
     # Local coordinates (testing) - Get from user location eventually
     print('Local coordinates:')
-    # coords_u = "53.480950,-2.237430" #- Manchester
     coords_u = "53.798921,-1.551878"  # - Leeds
 
     # Get target city
@@ -175,32 +170,36 @@ def main():
             print(f"Multiple cities found for {input_country} (see below), defaulting to city with largest population")
             print(t_result_city)
             pop_t = t_result_city['Population'].max()
-            print(f"t_result_city: {pop_t}")
+            print(f"pop_t in if: {pop_t}")
 
             # Sort results by largest population and return first row
             result_city_max = t_result_city.nlargest(1, ['Population'])
-            result_city_id = result_city_max.iloc[0]['id']
-
             print(f"result_city_max: {result_city_max}")
+            result_city_id = result_city_max.iloc[0]['id']
+            print(f"result_city_id: {result_city_id}")
+
         else:
             # Take row id value for lookup
-            pop_t = t_city_df.iloc[0]['Population']
+            pop_t = t_result_city.iloc[0]['Population']
+            print(f"pop_t in else: {pop_t}")
             result_city_id = t_result_city.iloc[0]['id']
-        print("result_city_id: ", result_city_id)
+            print("result_city_id in else: ", result_city_id)
     else:
         # Print results
         result_city_id = t_city_df.iloc[0]['id']
+        pop_t = t_city_df.iloc[0]['Population']
         print("result_city_id: ", result_city_id)
 
-    # Get target city's population from ID
+    # Get target city's name
     city_t_name = t_city_df.iloc[0]['city']
 
-    print(f"t_result_city now: {pop_t}")
+    print(f"pop_t now: {pop_t}")
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
-    
     
     # Now run the search passing in the variables
     nearest_city_search(conn, result_city_id, coords_u, pop_t)
+    
+    
     print("End of Main script")
 
 
