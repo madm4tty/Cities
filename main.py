@@ -52,13 +52,14 @@ def haversine(lon1, lat1, lon2, lat2):
 
 def find_closest(df, pop_t):
     print(f"Find closest city for population: {pop_t}")
-    #dist = (df['Lat'] - lat).abs() + (df['Lon'] - lon).abs()
     dist = (df['Population'] - pop_t).abs()
     return df.loc[dist.idxmin()]
 
 
 def get_user_ctrycode(df, lat, lon):
+    print(f"get_user_ctrycode:lat:{lat}, lon:")
     dist = (df['lat'] - lat).abs() + (df['lon'] - lon).abs()
+    print(f"dist value: {dist}")
     return df.loc[dist.idxmin()]
 
 
@@ -81,22 +82,22 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Create separate lat lon columns
     city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
 
-    # Convert lat lon to float datatype to help with sorting
+    # Convert lat lon to float datatype to allow processing
     city_df_lat_lon = city_df_lat_lon.astype({'Lat': 'float', 'Lon': 'float'})
     result = city_df_lat_lon.dtypes
     print("Check city_df_lat_lon datatypes:")
     print(result)
 
     # Get user ctrycode based on coords
-    ctrycode_id = get_user_ctrycode(city_df_lat_lon, u_lat, u_lon)
-    ctrycode = (get_user_ctrycode['ctrycode'][ctrycode_id])
-    print(f"ctrycode = {ctrycode}")
+    #ctrycode_id = get_user_ctrycode(city_df_lat_lon, u_lat, u_lon)
+    #ctrycode = (get_user_ctrycode['ctrycode'][ctrycode_id])
+    #print(f"ctrycode = {ctrycode}")
 
     # Get subset of main dataframe for sort and search
     print("Get subset of main dataframe for sort and search")
     #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == ctrycode)]
-
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB')]
+    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == ctrycode)]
     
 
 
@@ -127,11 +128,10 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     #print(f"distance from: {u_lat}, {u_lon} to  is {distance} km")
 
     n_city_id = find_closest(sub_df, pop_t)
-
-
+    print ("Print n_city_id result") 
     print (f"n_city_id: {n_city_id}") 
     print("End of nearest_city_search")
-    return n_city_id
+    #return n_city_id
 
 
 def main():
@@ -174,8 +174,8 @@ def main():
         if t_result_city_len > 1:
             print(f"Multiple cities found for {input_country} (see below), defaulting to city with largest population")
             print(t_result_city)
-            test = t_result_city['Population'].max()
-            print(f"t_result_city: {test}")
+            pop_t = t_result_city['Population'].max()
+            print(f"t_result_city: {pop_t}")
 
             # Sort results by largest population and return first row
             result_city_max = t_result_city.nlargest(1, ['Population'])
@@ -193,7 +193,7 @@ def main():
 
     # Get target city's population from ID
     city_t_name = t_city_df.iloc[0]['city']
-    pop_t = t_city_df.iloc[0]['Population']
+    print(f"t_result_city now: {pop_t}")
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     
