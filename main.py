@@ -50,10 +50,16 @@ def haversine(lon1, lat1, lon2, lat2):
     return c * r
 
 
-# def find_closest(df, lat, lon):
-#    print(f"Find closest for values: {lat}, {lon}")
-#    dist = (df['Lat'] - lat).abs() + (df['Lon'] - lon).abs()
-#    return df.loc[dist.idxmin()]
+def find_closest(df, pop_t):
+    print(f"Find closest city for population: {pop_t}")
+    #dist = (df['Lat'] - lat).abs() + (df['Lon'] - lon).abs()
+    dist = (df['Population'] - pop_t).abs()
+    return df.loc[dist.idxmin()]
+
+
+def get_user_ctrycode(df, lat, lon):
+    dist = (df['lat'] - lat).abs() + (df['lon'] - lon).abs()
+    return df.loc[dist.idxmin()]
 
 
 def nearest_city_search(conn, city_id, coords_u, pop_t):
@@ -81,52 +87,55 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     print("Check city_df_lat_lon datatypes:")
     print(result)
 
-    # Get city_id coordinates for distance measurement
-    # df.loc[df['column_name'] == some_value]
-    # coords_t = city_df_lat_lon.loc[city_df_lat_lon['id'] == city_id]
-    # coords_t = city_df_lat_lon.loc[(city_df_lat_lon['id'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
+    # Get user ctrycode based on coords
+    ctrycode_id = get_user_ctrycode(city_df_lat_lon, u_lat, u_lon)
+    ctrycode = (get_user_ctrycode['ctrycode'][ctrycode_id])
+    print(f"ctrycode = {ctrycode}")
 
     # Get subset of main dataframe for sort and search
     print("Get subset of main dataframe for sort and search")
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
+    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == ctrycode)]
+
+    
+
 
     # Sort subset dataframe
-    print("Sort subset dataframe")
-    sub_df.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
-    print(f"sub_df index: {len(sub_df.index)}")
+    #print("Sort subset dataframe")
+    #sub_df.sort_values(['Lat', 'Lon'], ascending=True, inplace=True)
+    #print(f"sub_df index: {len(sub_df.index)}")
+    
+    # Create new empty column in sub_df for calculated distances
+    sub_df['distance'] = ''
 
-    print("Print subset dataframe")
+    # Populate distance column in sub_df
+    print("Populate distance column in sub_df")
+    # iterate through each row and select
+    for ind in sub_df.index:
+        city = (sub_df['city'][ind])
+        t_lat = (sub_df['Lat'][ind])
+        t_lon = (sub_df['Lon'][ind])
+        distance = haversine(u_lat, u_lon, t_lat, t_lon)
+        #print(f"Distance for {city} = {distance}")
+        sub_df.loc[ind,'distance'] = distance
+    
+    print("Print sub_df with distances calculated")
     print(sub_df)
-
-    print("Haversine distance test")
-    distance = haversine(u_lat, u_lon, )
+    #print("Haversine distance test")
+    #distance = haversine(u_lat, u_lon, 53.4765365, -2.2423459)
     # test = hv(coords_u, coords_t, unit='mi')
-    print(f"distance from: {u_lat}, {u_lon} to  is {distance} km")
+    #print(f"distance from: {u_lat}, {u_lon} to  is {distance} km")
 
-    # sub_df.to_csv('test_out.csv')
+    n_city_id = find_closest(sub_df, pop_t)
 
-    # Use the DF to search
-    city_match = False
-    myint = 0
-    # Enter while loop to search for nearest match
-    while city_match == False:
-        print(f"Search while match is false - number of passes: ({myint})")
-        myint += 1  # Testing loop
 
-        if myint > 0:  # Test value to exit immediately
-            print("TESTING - Max loops reached, exit while loop!")
-            city_match = True
-
-    # print(city_df_lat_lon)
-
-    n_city_id = "TBA"
+    print (f"n_city_id: {n_city_id}") 
     print("End of nearest_city_search")
     return n_city_id
 
 
 def main():
     pd.set_option('display.max_columns', None)
-
     database = r"pythonsqlite.db"
 
     # Local coordinates (testing) - Get from user location eventually
@@ -186,6 +195,8 @@ def main():
     city_t_name = t_city_df.iloc[0]['city']
     pop_t = t_city_df.iloc[0]['Population']
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
+    
+    
     # Now run the search passing in the variables
     nearest_city_search(conn, result_city_id, coords_u, pop_t)
     print("End of Main script")
