@@ -184,6 +184,7 @@ def main():
             print(f"result_city_max: {result_city_max}")
         else:
             # Take row id value for lookup
+            pop_t = t_city_df.iloc[0]['Population']
             result_city_id = t_result_city.iloc[0]['id']
         print("result_city_id: ", result_city_id)
     else:
@@ -193,6 +194,7 @@ def main():
 
     # Get target city's population from ID
     city_t_name = t_city_df.iloc[0]['city']
+
     print(f"t_result_city now: {pop_t}")
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
