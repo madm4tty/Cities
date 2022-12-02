@@ -108,7 +108,7 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     sub_df=sub_df.assign(distance = '')
     sub_df=sub_df.assign(score = '')
         
-    # Populate distance column in sub_df
+    # Populate distance and score column in sub_df
     print("Populate distance column in sub_df")
     # iterate through each row and select
     for ind in sub_df.index:
@@ -123,31 +123,29 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
         score = pop_t - t_pop
         sub_df.loc[ind,'score'] = score
     
-    print("Sort sub_df by distances (TEST)")
-    sub_df.sort_values(by='distance',ascending=True, inplace=True)
-    print("Print sub_df with distances calculated")
-    print(sub_df)
+    # Update datatypes and check
+    sub_df = sub_df.astype({'distance': 'int', 'score': 'int'})
+    result = sub_df.dtypes
+    print("Check sub_df datatypes:")
+    print(result)
     
+    # Sort values by score (distance from 0)
+    sub_df_sorted = sub_df.sort_values(by="score", key=abs)
+    n_city_id = sub_df_sorted.iloc[1]['id']
+    n_city_name = sub_df_sorted.iloc[1]['city']
+    n_city_pop = sub_df_sorted.iloc[1]['Population']
 
-    file_name = 'sub_df.csv'
-    sub_df.to_csv(file_name)
-
-
-    # Confirm sort by distance
-    for ind in sub_df.index:
-        con_city = (sub_df['city'][ind])
-        con_pop = (sub_df['Population'][ind])
-        con_distance = (sub_df['distance'][ind])
-         
-
-        
-      
-
-    n_city_id = find_closest(sub_df, pop_t)
-    print ("Print n_city_id result") 
-    print (f"n_city_id: {n_city_id}") 
+    print("print sub_df_sorted")
+    print(sub_df_sorted)
+    
+    #n_city_id = find_closest(sub_df, pop_t)
+    #print ("Print n_city_id result") 
+    #print (f"n_city_id: {n_city_id}") 
     print("End of nearest_city_search")
-    #return n_city_id
+    
+    
+    
+    return n_city_id, n_city_name, n_city_pop
 
 
 def main():
@@ -217,9 +215,16 @@ def main():
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     # Now run the search passing in the variables
-    nearest_city_search(conn, result_city_id, coords_u, pop_t)
+    n_city_id, n_city_name, n_city_pop = nearest_city_search(conn, result_city_id, coords_u, pop_t)
     
+    #Return info
+    returnedData = f"""
+    Town/City supplied: {city_t_name} - Population: {pop_t}
+    Nearest local town/city: {n_city_name} - Population: {n_city_pop}
     
+    """
+    print(returnedData)
+
     print("End of Main script")
 
 
