@@ -9,7 +9,6 @@ import pandas as pd
 import sqlite3
 from sqlite3 import Error
 
-
 def create_connection(db_file):
     """ create a database connection to the SQLite database
         specified by the db_file
@@ -24,7 +23,6 @@ def create_connection(db_file):
 
     return conn
 
-
 def select_cities(conn, cityname):
     # Query target city
     cityname = cityname.lower()
@@ -32,7 +30,6 @@ def select_cities(conn, cityname):
         "SELECT id, city, country, ctrycode, Timezone, Population, Coordinates FROM cities WHERE city LIKE (?)",
         conn, params=(cityname,))
     return t_city_df
-
 
 def haversine(lon1, lat1, lon2, lat2):
     """
@@ -50,14 +47,6 @@ def haversine(lon1, lat1, lon2, lat2):
     r = 6371  # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
     return c * r
 
-
-def find_closest(df, pop_t):
-    print(f"Find closest city for population: {pop_t}")
-    dist = (df['Population'] - pop_t).abs()
-    #dist = (df['Population'] - pop_t).abs() + (df['distance'] - dist_t).abs()
-    return df.loc[dist.idxmin()]
-
-
 def get_user_ctrycode(df, lat, lon):
     print(f"get_user_ctrycode:lat:{lat}, lon:")
     dist = (df['lat'] - lat).abs() + (df['lon'] - lon).abs()
@@ -66,7 +55,7 @@ def get_user_ctrycode(df, lat, lon):
 
 
 def nearest_city_search(conn, city_id, coords_u, pop_t):
-    print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_t:{pop_t}")
+    #print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_t:{pop_t}")
 
     # split coords
     u_coords = coords_u.split(",")
@@ -75,7 +64,7 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # convert coords to float 64 datatype
     u_lat = float(u_lat)
     u_lon = float(u_lon)
-    print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")
+    #print(f"split coords - u_Lat:{u_lat}, u_Lon:{u_lon}")
 
     # Get all cities into DF for lat/long matching
     city_df_lat_lon = pd.read_sql(
@@ -86,25 +75,26 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
 
     # Convert lat lon to float datatype to allow processing
     city_df_lat_lon = city_df_lat_lon.astype({'Lat': 'float', 'Lon': 'float'})
-    result = city_df_lat_lon.dtypes
-    print("Check city_df_lat_lon datatypes:")
-    print(result)
-
-    # Get user ctrycode based on coords
-    #ctrycode_id = get_user_ctrycode(city_df_lat_lon, u_lat, u_lon)
-    #ctrycode = (get_user_ctrycode['ctrycode'][ctrycode_id])
-    #print(f"ctrycode = {ctrycode}")
+    #result = city_df_lat_lon.dtypes
+    #print("Check city_df_lat_lon datatypes:")
+    #print(result)
 
     # Get subset of main dataframe for sort and search
     print("Get subset of main dataframe for sort and search")    
     # Narrow down dataset by population bands
-    if pop_t > 50000:
+    if pop_t > 500000:
         pophigh = pop_t + 500000
         poplow = pop_t - 500000
+    elif 100000 <= pop_t <= 500000:
+        pophigh = pop_t + 100000
+        poplow = pop_t - 100000
+    elif 50000 <= pop_t <= 100000:
+        pophigh = pop_t + 10000
+        poplow = pop_t - 10000
     else:
-        pophigh = pop_t + 5000
-        poplow = pop_t - 5000
-    
+        pophigh = pop_t + 2000
+        poplow = pop_t - 2000
+        
     # Narrow by population
     #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
     sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
@@ -140,18 +130,19 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Sort by
     sub_df_sorted = sub_df[sub_df['score'] != 0].sort_values(['finalscore'])
     
-    sub_df_sorted.to_csv('sub_df_sorted.csv')
+    #sub_df_sorted.to_csv('sub_df_sorted.csv')
     
     # Populate
     n_city_id = sub_df_sorted.iloc[0]['id']
     n_city_name = sub_df_sorted.iloc[0]['city']
     n_city_pop = sub_df_sorted.iloc[0]['Population']
+    n_city_dist = sub_df_sorted.iloc[0]['distance']
 
     print("print sub_df_sorted")
     print(sub_df_sorted)
     print("End of nearest_city_search")
 
-    return n_city_id, n_city_name, n_city_pop
+    return n_city_id, n_city_name, n_city_pop, n_city_dist
 
 def main():
     pd.set_option('display.max_columns', None)
@@ -160,6 +151,7 @@ def main():
     # Local coordinates (testing) - Get from user location eventually
     print('Local coordinates:')
     coords_u = "53.798921,-1.551878"  # - Leeds
+    distThreshold = 200
 
     # Get target city
     print('Enter search city:')
@@ -220,14 +212,30 @@ def main():
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     # Now run the search passing in the variables
-    n_city_id, n_city_name, n_city_pop = nearest_city_search(conn, result_city_id, coords_u, pop_t)
+    n_city_id, n_city_name, n_city_pop, n_city_dist = nearest_city_search(conn, result_city_id, coords_u, pop_t)
     
     #Return info
-    returnedData = f"""
-    Town/City supplied: {city_t_name} - Population: {pop_t}
-    Nearest local town/city: {n_city_name} - Population: {n_city_pop}
-    
-    """
+    if n_city_dist < distThreshold:
+        returnedData = f"""
+        Town/City supplied: {city_t_name}
+        Population: {pop_t}
+        
+        Nearest local town/city: {n_city_name}
+        Population: {n_city_pop}
+        Distance from your location(km):{n_city_dist}
+        
+        """
+    else:
+        returnedData = f"""
+        Town/City supplied: {city_t_name}
+        Population: {pop_t}
+        
+        No locations found within {distThreshold}km of your location.
+        Nearest town/city with a similar population: {n_city_name}
+        Population: {n_city_pop}
+        Distance from your location(km):{n_city_dist}
+        
+        """
     print(returnedData)
 
     print("End of Main script")
