@@ -107,12 +107,13 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Create new empty column in sub_df for calculated distances
     sub_df=sub_df.assign(distance = '')
     sub_df=sub_df.assign(score = '')
+    #sub_df=sub_df.assign(finalscore = '')
         
     # Populate distance and score column in sub_df
     print("Populate distance column in sub_df")
     # iterate through each row and select
     for ind in sub_df.index:
-        city = (sub_df['city'][ind])
+        #city = (sub_df['city'][ind])
         t_lat = (sub_df['Lat'][ind])
         t_lon = (sub_df['Lon'][ind])
         t_pop = (sub_df['Population'][ind])
@@ -120,8 +121,11 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
         t_pop = int(t_pop)
         distance = int(distance)
         sub_df.loc[ind,'distance'] = distance
-        score = pop_t - t_pop
+        #score = pop_t - t_pop
+        score = abs(pop_t-t_pop)
         sub_df.loc[ind,'score'] = score
+        finalscore = distance + score
+        sub_df.loc[ind,'finalscore'] = finalscore
     
     # Update datatypes and check
     sub_df = sub_df.astype({'distance': 'int', 'score': 'int'})
@@ -129,11 +133,24 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     print("Check sub_df datatypes:")
     print(result)
     
-    # Sort values by score (distance from 0)
-    sub_df_sorted = sub_df.sort_values(by="score", key=abs)
-    n_city_id = sub_df_sorted.iloc[1]['id']
-    n_city_name = sub_df_sorted.iloc[1]['city']
-    n_city_pop = sub_df_sorted.iloc[1]['Population']
+    # Sort values by scores (distance from 0)
+    #sub_df_sorted = sub_df.sort_values(by="finalscore", key=abs)
+    #sub_df_sorted = sub_df.sort_values(by="finalscore")
+    
+    # Sort by two columns 
+    #df2 = df[df['time'] != 0].sort_values(['y','time'])
+    sub_df_sorted = sub_df[sub_df['score'] != 0].sort_values(['finalscore'])
+    
+    #sub_df_sorted = sub_df.sort_values(['score', 'distance'],
+     #                    ascending = [True, True])
+    
+    
+    n_city_id = sub_df_sorted.iloc[0]['id']
+    n_city_name = sub_df_sorted.iloc[0]['city']
+    n_city_pop = sub_df_sorted.iloc[0]['Population']
+
+    # Output df for checking
+    #sub_df_sorted.to_csv('sub_df_sorted.csv')
 
     print("print sub_df_sorted")
     print(sub_df_sorted)
