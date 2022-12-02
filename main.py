@@ -96,24 +96,29 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     #print(f"ctrycode = {ctrycode}")
 
     # Get subset of main dataframe for sort and search
-    print("Get subset of main dataframe for sort and search")
-    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > 279000)]
-    pophigh = pop_t + 50000
-    poplow = pop_t - 50000
+    print("Get subset of main dataframe for sort and search")    
+    # Narrow down dataset by population bands
+    if pop_t > 50000:
+        pophigh = pop_t + 500000
+        poplow = pop_t - 500000
+    else:
+        pophigh = pop_t + 5000
+        poplow = pop_t - 5000
     
     # Narrow by population
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
-    
+    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
+   
     # Create new empty column in sub_df for calculated distances
     sub_df=sub_df.assign(distance = '')
     sub_df=sub_df.assign(score = '')
-    #sub_df=sub_df.assign(finalscore = '')
-        
+    sub_df=sub_df.assign(finalscore = '')
+    
+    
     # Populate distance and score column in sub_df
     print("Populate distance column in sub_df")
     # iterate through each row and select
     for ind in sub_df.index:
-        #city = (sub_df['city'][ind])
         t_lat = (sub_df['Lat'][ind])
         t_lon = (sub_df['Lon'][ind])
         t_pop = (sub_df['Population'][ind])
@@ -121,49 +126,32 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
         t_pop = int(t_pop)
         distance = int(distance)
         sub_df.loc[ind,'distance'] = distance
-        #score = pop_t - t_pop
         score = abs(pop_t-t_pop)
         sub_df.loc[ind,'score'] = score
-        finalscore = distance + score
+        finalscore = int(distance + score)
         sub_df.loc[ind,'finalscore'] = finalscore
-    
+
+    sub_df=sub_df.astype({'distance': 'int', 'score': 'int', 'finalscore': 'int'})
     # Update datatypes and check
-    sub_df = sub_df.astype({'distance': 'int', 'score': 'int'})
     result = sub_df.dtypes
     print("Check sub_df datatypes:")
     print(result)
     
-    # Sort values by scores (distance from 0)
-    #sub_df_sorted = sub_df.sort_values(by="finalscore", key=abs)
-    #sub_df_sorted = sub_df.sort_values(by="finalscore")
-    
-    # Sort by two columns 
-    #df2 = df[df['time'] != 0].sort_values(['y','time'])
+    # Sort by
     sub_df_sorted = sub_df[sub_df['score'] != 0].sort_values(['finalscore'])
     
-    #sub_df_sorted = sub_df.sort_values(['score', 'distance'],
-     #                    ascending = [True, True])
+    sub_df_sorted.to_csv('sub_df_sorted.csv')
     
-    
+    # Populate
     n_city_id = sub_df_sorted.iloc[0]['id']
     n_city_name = sub_df_sorted.iloc[0]['city']
     n_city_pop = sub_df_sorted.iloc[0]['Population']
 
-    # Output df for checking
-    #sub_df_sorted.to_csv('sub_df_sorted.csv')
-
     print("print sub_df_sorted")
     print(sub_df_sorted)
-    
-    #n_city_id = find_closest(sub_df, pop_t)
-    #print ("Print n_city_id result") 
-    #print (f"n_city_id: {n_city_id}") 
     print("End of nearest_city_search")
-    
-    
-    
-    return n_city_id, n_city_name, n_city_pop
 
+    return n_city_id, n_city_name, n_city_pop
 
 def main():
     pd.set_option('display.max_columns', None)
