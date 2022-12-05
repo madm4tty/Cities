@@ -80,33 +80,35 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     #print(result)
 
     # Get subset of main dataframe for sort and search
-    print("Get subset of main dataframe for sort and search")    
+    #print("Get subset of main dataframe for sort and search")    
     # Narrow down dataset by population bands
     if pop_t > 500000:
         pophigh = pop_t + 500000
         poplow = pop_t - 500000
     elif 100000 <= pop_t <= 500000:
-        pophigh = pop_t + 100000
-        poplow = pop_t - 100000
+        pophigh = pop_t + 50000
+        poplow = pop_t - 50000
     elif 50000 <= pop_t <= 100000:
-        pophigh = pop_t + 10000
-        poplow = pop_t - 10000
+        pophigh = pop_t + 5000
+        poplow = pop_t - 5000
+    elif 5000 <= pop_t <= 10000:
+        pophigh = pop_t + 500
+        poplow = pop_t - 500
     else:
-        pophigh = pop_t + 2000
-        poplow = pop_t - 2000
+        pophigh = pop_t + 50
+        poplow = pop_t - 50
         
-    # Narrow by population
-    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == 'GB') & (city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
+    # Narrow by population - Country code allows nearest city?
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == "GB")]
+    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
    
     # Create new empty column in sub_df for calculated distances
     sub_df=sub_df.assign(distance = '')
     sub_df=sub_df.assign(score = '')
     sub_df=sub_df.assign(finalscore = '')
     
-    
     # Populate distance and score column in sub_df
-    print("Populate distance column in sub_df")
+    #print("Populate distance column in sub_df")
     # iterate through each row and select
     for ind in sub_df.index:
         t_lat = (sub_df['Lat'][ind])
@@ -123,9 +125,9 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
 
     sub_df=sub_df.astype({'distance': 'int', 'score': 'int', 'finalscore': 'int'})
     # Update datatypes and check
-    result = sub_df.dtypes
-    print("Check sub_df datatypes:")
-    print(result)
+    #result = sub_df.dtypes
+    #print("Check sub_df datatypes:")
+    #print(result)
     
     # Sort by
     sub_df_sorted = sub_df[sub_df['score'] != 0].sort_values(['finalscore'])
@@ -150,7 +152,7 @@ def main():
     database = r"pythonsqlite.db"
 
     # Local coordinates (testing) - Get from user location eventually
-    print('Local coordinates:')
+    #print('Local coordinates:')
     coords_u = "53.798921,-1.551878"  # - Leeds
     distThreshold = 200
 
@@ -199,17 +201,16 @@ def main():
             pop_t = t_result_city.iloc[0]['Population']
             print(f"pop_t in else: {pop_t}")
             result_city_id = t_result_city.iloc[0]['id']
-            print("result_city_id in else: ", result_city_id)
+            #print("result_city_id in else: ", result_city_id)
     else:
         # Print results
         result_city_id = t_city_df.iloc[0]['id']
         pop_t = t_city_df.iloc[0]['Population']
-        print("result_city_id: ", result_city_id)
+        #print("result_city_id: ", result_city_id)
 
     # Get target city's name
     city_t_name = t_city_df.iloc[0]['city']
 
-    print(f"pop_t now: {pop_t}")
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     # Now run the search passing in the variables
