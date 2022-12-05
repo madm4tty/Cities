@@ -68,7 +68,7 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
 
     # Get all cities into DF for lat/long matching
     city_df_lat_lon = pd.read_sql(
-        "SELECT id, city, ctrycode, Population, Coordinates FROM cities;", conn)
+        "SELECT id, city, country, ctrycode, Population, Coordinates FROM cities;", conn)
 
     # Create separate lat lon columns
     city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
@@ -135,6 +135,7 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     # Populate
     n_city_id = sub_df_sorted.iloc[0]['id']
     n_city_name = sub_df_sorted.iloc[0]['city']
+    n_city_country = sub_df_sorted.iloc[0]['country']
     n_city_pop = sub_df_sorted.iloc[0]['Population']
     n_city_dist = sub_df_sorted.iloc[0]['distance']
 
@@ -142,7 +143,7 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     print(sub_df_sorted)
     print("End of nearest_city_search")
 
-    return n_city_id, n_city_name, n_city_pop, n_city_dist
+    return n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist
 
 def main():
     pd.set_option('display.max_columns', None)
@@ -212,7 +213,7 @@ def main():
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     # Now run the search passing in the variables
-    n_city_id, n_city_name, n_city_pop, n_city_dist = nearest_city_search(conn, result_city_id, coords_u, pop_t)
+    n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist = nearest_city_search(conn, result_city_id, coords_u, pop_t)
     
     #Return info
     if n_city_dist < distThreshold:
@@ -231,7 +232,7 @@ def main():
         Population: {pop_t}
         
         No locations found within {distThreshold}km of your location.
-        Nearest town/city with a similar population: {n_city_name}
+        Nearest town/city with a similar population: {n_city_name}, {n_city_country}
         Population: {n_city_pop}
         Distance from your location(km):{n_city_dist}
         
