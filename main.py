@@ -53,7 +53,6 @@ def get_user_ctrycode(df, lat, lon):
     print(f"dist value: {dist}")
     return df.loc[dist.idxmin()]
 
-
 def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
     #print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_t:{pop_t}")
 
@@ -77,9 +76,12 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
     city_df_lat_lon = city_df_lat_lon.astype({'Lat': 'float', 'Lon': 'float'})
 
     # Narrow down dataset by population bands
-    if pop_t > 500000:
-        pophigh = pop_t + 3000000
-        poplow = pop_t - 3000000
+    if pop_t > 1000000:
+        pophigh = pop_t + 10000000
+        poplow = pop_t - 10000000
+    elif 500000 <= pop_t <= 1000000:
+        pophigh = pop_t + 100000
+        poplow = pop_t - 100000
     elif 100000 <= pop_t <= 500000:
         pophigh = pop_t + 50000
         poplow = pop_t - 50000
@@ -90,8 +92,8 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
         pophigh = pop_t + 1000
         poplow = pop_t - 1000
     else:
-        pophigh = pop_t + 500
-        poplow = pop_t - 500
+        pophigh = pop_t + 200
+        poplow = pop_t - 200
         
     """ Use Decimal Degree calc to narrow results
     Approx 111km (60 miles) to each degree, calculate radius 
@@ -145,9 +147,9 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
     n_city_pop = sub_df_sorted.iloc[0]['Population']
     n_city_dist = sub_df_sorted.iloc[0]['distance']
     
-    #print("print sub_df_sorted")
-    #print(sub_df_sorted)
-    #print("End of nearest_city_search")
+    #(len(t_result_city.index)
+    print(f"sub_df_sorted length: {len(sub_df_sorted.index)}")
+    print(sub_df_sorted[['city', 'country', 'Population', 'distance']].head(10))
 
     return n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist
 
@@ -159,7 +161,7 @@ def main():
     #print('Local coordinates:')
     coords_u = "53.798921,-1.551878"  # - Leeds
     distThreshold = 200
-    searchRadius = 1000
+    searchRadius = 500
 
     # Get target city
     print('Enter search city:')
@@ -176,10 +178,10 @@ def main():
 
     # If there are multiple results in t_city_df we need to narrow down
     if t_city_df_len > 1:
-        print("t_city_df:")
-        print(t_city_df)
-        msg = f"There are: {t_city_df_len} results for: {t_city_input}."
+
+        msg = f"There are: {t_city_df_len} results for: {t_city_input}:"
         print(msg)
+        print(t_city_df[['city', 'country', 'ctrycode', 'Population']])
         input_country = input("Which country is the city in? (use country code eg:GB):")
         input_country = input_country.upper()
         print(f"input_country is: {input_country}")
@@ -188,23 +190,18 @@ def main():
 
         # If there are multiple cities in results, the city with the largest population will be used
         t_result_city_len = (len(t_result_city.index))
-        print(f"t_result_city_len is: {t_result_city_len}")
         if t_result_city_len > 1:
             print(f"Multiple cities found for {input_country} (see below), defaulting to city with largest population")
             print(t_result_city)
             pop_t = t_result_city['Population'].max()
-            print(f"pop_t in if: {pop_t}")
-
             # Sort results by largest population and return first row
             result_city_max = t_result_city.nlargest(1, ['Population'])
             print(f"result_city_max: {result_city_max}")
             result_city_id = result_city_max.iloc[0]['id']
             print(f"result_city_id: {result_city_id}")
-
         else:
             # Take row id value for lookup
             pop_t = t_result_city.iloc[0]['Population']
-            print(f"pop_t in else: {pop_t}")
             result_city_id = t_result_city.iloc[0]['id']
     else:
         # Print results
