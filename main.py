@@ -75,16 +75,11 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
 
     # Convert lat lon to float datatype to allow processing
     city_df_lat_lon = city_df_lat_lon.astype({'Lat': 'float', 'Lon': 'float'})
-    #result = city_df_lat_lon.dtypes
-    #print("Check city_df_lat_lon datatypes:")
-    #print(result)
 
-    # Get subset of main dataframe for sort and search
-    #print("Get subset of main dataframe for sort and search")    
     # Narrow down dataset by population bands
     if pop_t > 500000:
-        pophigh = pop_t + 500000
-        poplow = pop_t - 500000
+        pophigh = pop_t + 3000000
+        poplow = pop_t - 3000000
     elif 100000 <= pop_t <= 500000:
         pophigh = pop_t + 50000
         poplow = pop_t - 50000
@@ -92,23 +87,34 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
         pophigh = pop_t + 5000
         poplow = pop_t - 5000
     elif 5000 <= pop_t <= 10000:
-        pophigh = pop_t + 500
-        poplow = pop_t - 500
+        pophigh = pop_t + 1000
+        poplow = pop_t - 1000
     else:
         pophigh = pop_t + 500
         poplow = pop_t - 500
         
-    # Narrow by population
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
-   
+    """ Use Decimal Degree calc to narrow results
+    Approx 111km (60 miles) to each degree, calculate radius 
+    based on searchRadius variable
+    """
+    diffDegrees = (searchRadius + 200) / 111
+    latH = u_lat + diffDegrees
+    latL = u_lat - diffDegrees
+    lonH = u_lon + diffDegrees
+    lonL = u_lon - diffDegrees
+    sub_df = (city_df_lat_lon.loc[(city_df_lat_lon['Lat'] >= latL) & 
+                                  (city_df_lat_lon['Lat'] <= latH) & 
+                                  (city_df_lat_lon['Lon'] >= lonL) & 
+                                  (city_df_lat_lon['Lon'] <= lonH) &
+                                  (city_df_lat_lon['Population'] >= poplow) &
+                                  (city_df_lat_lon['Population'] <= pophigh)])
+  
     # Create new empty column in sub_df for calculated distances
     sub_df=sub_df.assign(distance = '')
     sub_df=sub_df.assign(score = '')
     sub_df=sub_df.assign(finalscore = '')
     
     # Populate distance and score column in sub_df
-    #print("Populate distance column in sub_df")
-    # iterate through each row and select
     for ind in sub_df.index:
         t_lat = (sub_df['Lat'][ind])
         t_lon = (sub_df['Lon'][ind])
@@ -123,10 +129,6 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
         sub_df.loc[ind,'finalscore'] = finalscore
 
     sub_df=sub_df.astype({'distance': 'int', 'score': 'int', 'finalscore': 'int'})
-    # Update datatypes and check
-    #result = sub_df.dtypes
-    #print("Check sub_df datatypes:")
-    #print(result)
     
     # Remove any results that are too far away > {searchRadius}km
     sub_df = sub_df[sub_df.distance < searchRadius]
@@ -136,16 +138,16 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
     
     #sub_df_sorted.to_csv('sub_df_sorted.csv')
     
-    # Populate
+    # Populate variables for return
     n_city_id = sub_df_sorted.iloc[0]['id']
     n_city_name = sub_df_sorted.iloc[0]['city']
     n_city_country = sub_df_sorted.iloc[0]['country']
     n_city_pop = sub_df_sorted.iloc[0]['Population']
     n_city_dist = sub_df_sorted.iloc[0]['distance']
-
-    print("print sub_df_sorted")
-    print(sub_df_sorted)
-    print("End of nearest_city_search")
+    
+    #print("print sub_df_sorted")
+    #print(sub_df_sorted)
+    #print("End of nearest_city_search")
 
     return n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist
 
@@ -204,12 +206,10 @@ def main():
             pop_t = t_result_city.iloc[0]['Population']
             print(f"pop_t in else: {pop_t}")
             result_city_id = t_result_city.iloc[0]['id']
-            #print("result_city_id in else: ", result_city_id)
     else:
         # Print results
         result_city_id = t_city_df.iloc[0]['id']
         pop_t = t_city_df.iloc[0]['Population']
-        #print("result_city_id: ", result_city_id)
 
     # Get target city's name
     city_t_name = t_city_df.iloc[0]['city']
@@ -217,7 +217,8 @@ def main():
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     # Now run the search passing in the variables
-    n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist = nearest_city_search(conn, result_city_id, coords_u, pop_t, searchRadius)
+    n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist = \
+    nearest_city_search(conn, result_city_id, coords_u, pop_t, searchRadius)
     
     #Return info
     if n_city_dist < distThreshold:
