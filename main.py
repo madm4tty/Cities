@@ -54,7 +54,7 @@ def get_user_ctrycode(df, lat, lon):
     return df.loc[dist.idxmin()]
 
 
-def nearest_city_search(conn, city_id, coords_u, pop_t):
+def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
     #print(f"inbound vars - conn:{city_id}, coords_u:{coords_u}, pop_t:{pop_t}")
 
     # split coords
@@ -95,12 +95,11 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
         pophigh = pop_t + 500
         poplow = pop_t - 500
     else:
-        pophigh = pop_t + 50
-        poplow = pop_t - 50
+        pophigh = pop_t + 500
+        poplow = pop_t - 500
         
-    # Narrow by population - Country code allows nearest city?
-    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['ctrycode'] == "GB")]
-    #sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
+    # Narrow by population
+    sub_df = city_df_lat_lon.loc[(city_df_lat_lon['Population'] > poplow) & (city_df_lat_lon['Population'] < pophigh)]
    
     # Create new empty column in sub_df for calculated distances
     sub_df=sub_df.assign(distance = '')
@@ -129,7 +128,10 @@ def nearest_city_search(conn, city_id, coords_u, pop_t):
     #print("Check sub_df datatypes:")
     #print(result)
     
-    # Sort by
+    # Remove any results that are too far away > {searchRadius}km
+    sub_df = sub_df[sub_df.distance < searchRadius]
+    
+    # Sort by final score to get best match
     sub_df_sorted = sub_df[sub_df['score'] != 0].sort_values(['finalscore'])
     
     #sub_df_sorted.to_csv('sub_df_sorted.csv')
@@ -155,6 +157,7 @@ def main():
     #print('Local coordinates:')
     coords_u = "53.798921,-1.551878"  # - Leeds
     distThreshold = 200
+    searchRadius = 1000
 
     # Get target city
     print('Enter search city:')
@@ -214,7 +217,7 @@ def main():
     print(f"Target city is: {city_t_name} with a population of: {pop_t}")
     
     # Now run the search passing in the variables
-    n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist = nearest_city_search(conn, result_city_id, coords_u, pop_t)
+    n_city_id, n_city_name, n_city_country, n_city_pop, n_city_dist = nearest_city_search(conn, result_city_id, coords_u, pop_t, searchRadius)
     
     #Return info
     if n_city_dist < distThreshold:
@@ -233,7 +236,7 @@ def main():
         Population: {pop_t}
         
         No locations found within {distThreshold}km of your location.
-        Nearest town/city with a similar population: {n_city_name}, {n_city_country}
+        Nearest town/city within {searchRadius}km with a similar population: {n_city_name}, {n_city_country}
         Population: {n_city_pop}
         Distance from your location(km):{n_city_dist}
         
