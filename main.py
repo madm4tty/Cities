@@ -77,23 +77,23 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
 
     # Narrow down dataset by population bands
     if pop_t > 1000000:
-        pophigh = pop_t + 10000000
-        poplow = pop_t - 10000000
+        pophigh = city_df_lat_lon['Population'].max()
+        poplow = 1000000
     elif 500000 <= pop_t <= 1000000:
-        pophigh = pop_t + 100000
-        poplow = pop_t - 100000
+        pophigh = 1000000
+        poplow = 500000
     elif 100000 <= pop_t <= 500000:
-        pophigh = pop_t + 50000
-        poplow = pop_t - 50000
+        pophigh = 500000
+        poplow = 100000
     elif 50000 <= pop_t <= 100000:
-        pophigh = pop_t + 5000
-        poplow = pop_t - 5000
+        pophigh = 100000
+        poplow = 50000
     elif 5000 <= pop_t <= 10000:
-        pophigh = pop_t + 1000
-        poplow = pop_t - 1000
+        pophigh = 10000
+        poplow = 5000
     else:
-        pophigh = pop_t + 200
-        poplow = pop_t - 200
+        pophigh = 5000
+        poplow = city_df_lat_lon['Population'].min()
         
     """ Use Decimal Degree calc to narrow results
     Approx 111km (60 miles) to each degree, calculate radius 
