@@ -12,7 +12,6 @@ https://public.opendatasoft.com/explore/dataset/geonames-all-cities-with-a-popul
 Libraries
 Pandas - For dataframes
 sqlite3 - For DB file
-Haversine - Calculate the distance between two points on Earth using their latitude and longitude
 
 Design:
 - Get user location (latitude and longitude coordinates in decimal format)
