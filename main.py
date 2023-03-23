@@ -87,8 +87,8 @@ def nearest_city_search(conn, city_id, coords_u, pop_t, searchRadius):
             "SELECT id, city, country, ctrycode, Population, Coordinates FROM cities;", conn)
     
         # Create separate lat lon columns
-        city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(',', 1, expand=True)
-    
+        city_df_lat_lon[['Lat', 'Lon']] = city_df_lat_lon['Coordinates'].str.split(pat=',', n=1, expand=True)
+
         # Convert lat lon to float datatype to allow processing
         city_df_lat_lon = city_df_lat_lon.astype({'Lat': 'float', 'Lon': 'float'})
     
